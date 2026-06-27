@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../models/board_square.dart';
 import '../theme/game_theme.dart';
 import '../theme/game_icons.dart';
+import 'scale_pressable.dart';
 
 class SquareWidget extends StatelessWidget {
   final BoardSquare square;
@@ -39,7 +40,7 @@ class SquareWidget extends StatelessWidget {
     );
 
     // Neumorphic / Glassmorphic container
-    return GestureDetector(
+    return ScalePressable(
       onTap: (isSelectable || isSelected) ? onTap : null,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),

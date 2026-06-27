@@ -32,56 +32,66 @@ class PlayerPanel extends StatelessWidget {
     final playerGradient = isP1 ? GameTheme.p1Gradient : GameTheme.p2Gradient;
     final playerIcon = isP1 ? GameIcons.player1 : _getPlayer2Icon();
 
-    return AnimatedContainer(
+    return AnimatedScale(
+      scale: isActive ? 1.04 : 0.95,
       duration: AppMotion.slow,
       curve: AppMotion.enter,
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
-      decoration: BoxDecoration(
-        color: GameTheme.cardBackground.withOpacity(isActive ? 0.9 : 0.6),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: isActive ? playerColor : Colors.white.withOpacity(0.05),
-          width: isActive ? 2.0 : 1.0,
-        ),
-        boxShadow: isActive
-            ? [BoxShadow(color: playerColor.withOpacity(0.15), blurRadius: 12, spreadRadius: 1)]
-            : GameTheme.glassShadows,
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Stack(
-            alignment: Alignment.center,
+      child: AnimatedOpacity(
+        opacity: isActive ? 1.0 : 0.6,
+        duration: AppMotion.slow,
+        curve: AppMotion.enter,
+        child: AnimatedContainer(
+          duration: AppMotion.slow,
+          curve: AppMotion.enter,
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+          decoration: BoxDecoration(
+            color: GameTheme.cardBackground.withOpacity(isActive ? 0.9 : 0.6),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: isActive ? playerColor : Colors.white.withOpacity(0.05),
+              width: isActive ? 2.0 : 1.0,
+            ),
+            boxShadow: isActive
+                ? [BoxShadow(color: playerColor.withOpacity(0.15), blurRadius: 12, spreadRadius: 1)]
+                : GameTheme.glassShadows,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              if (isActive) _PulseCircle(color: playerColor),
-              Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(gradient: playerGradient, shape: BoxShape.circle),
-                child: Icon(playerIcon, color: Colors.white, size: 20),
+              Stack(
+                alignment: Alignment.center,
+                children: [
+                  if (isActive) _PulseCircle(color: playerColor),
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(gradient: playerGradient, shape: BoxShape.circle),
+                    child: Icon(playerIcon, color: Colors.white, size: 20),
+                  ),
+                  if (!isP1 && mode != GameMode.localPvP)
+                    Positioned(
+                      right: -2,
+                      bottom: -2,
+                      child: _difficultyBadge(),
+                    ),
+                ],
               ),
-              if (!isP1 && mode != GameMode.localPvP)
-                Positioned(
-                  right: -2,
-                  bottom: -2,
-                  child: _difficultyBadge(),
-                ),
+              const SizedBox(height: 8),
+              _statRow(GameIcons.score, '$score', playerColor, size: 18),
+              const SizedBox(height: 6),
+              Wrap(
+                alignment: WrapAlignment.center,
+                spacing: 6,
+                runSpacing: 4,
+                children: [
+                  _statRow(GameIcons.citizen, '$citizenPool', GameTheme.citizenColor),
+                  _statRow(GameIcons.mandarin, '$mandarinPool', GameTheme.mandarinColor),
+                  if (debt > 0) _statRow(GameIcons.debt, '-$debt', Colors.redAccent),
+                ],
+              ),
             ],
           ),
-          const SizedBox(height: 8),
-          _statRow(GameIcons.score, '$score', playerColor, size: 18),
-          const SizedBox(height: 6),
-          Wrap(
-            alignment: WrapAlignment.center,
-            spacing: 6,
-            runSpacing: 4,
-            children: [
-              _statRow(GameIcons.citizen, '$citizenPool', GameTheme.citizenColor),
-              _statRow(GameIcons.mandarin, '$mandarinPool', GameTheme.mandarinColor),
-              if (debt > 0) _statRow(GameIcons.debt, '-$debt', Colors.redAccent),
-            ],
-          ),
-        ],
+        ),
       ),
     );
   }

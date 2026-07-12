@@ -54,3 +54,6 @@ app.*.map.json
 /ui_redesign_*.png
 /mcp_mobile_game_fixed.png
 /screenshot*.png
+
+# Curated Play screenshots (large; keep locally, not in VCS)
+/play_assets/screenshot-*.png

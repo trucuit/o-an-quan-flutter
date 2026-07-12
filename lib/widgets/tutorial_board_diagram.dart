@@ -18,6 +18,9 @@ class TutorialBoardDiagram extends StatelessWidget {
       builder: (context, constraints) {
         final maxWidth = constraints.maxWidth.isFinite ? constraints.maxWidth : 320.0;
         final maxHeight = constraints.maxHeight.isFinite ? constraints.maxHeight : 200.0;
+        // Fit the largest board at a fixed 2.4:1 aspect ratio that respects
+        // both available dimensions, so the diagram fills the card's height
+        // (not just its width) when the card gives it generous vertical room.
         final height = (maxWidth / 2.4).clamp(0.0, maxHeight);
         final width = height * 2.4;
 

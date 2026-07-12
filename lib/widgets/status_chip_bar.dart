@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/game_state.dart';
 import '../models/game_status.dart';
 import '../theme/app_motion.dart';
+import '../theme/game_icons.dart';
 import '../theme/game_play_theme.dart';
 import '../theme/game_theme.dart';
 import '../utils/square_names.dart';
@@ -28,26 +29,35 @@ class StatusChipBar extends StatelessWidget {
     }
 
     final color = _colorFor(status, activePlayer);
+    final icon = _iconFor(status, isAnimating, mode, activePlayer);
 
     return Semantics(
       liveRegion: true,
       label: message,
       child: AnimatedSwitcher(
         duration: AppMotion.resolve(context, AppMotion.medium),
-        child: Align(
+        child: Row(
           key: ValueKey(message),
-          alignment: Alignment.centerLeft,
-          child: Text(
-            message,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w500,
-              color: color,
-              height: 1.2,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (icon != null) ...[
+              Icon(icon, size: 16, color: color),
+              const SizedBox(width: GameTheme.spaceXs),
+            ],
+            Flexible(
+              child: Text(
+                message,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: color,
+                  height: 1.2,
+                ),
+              ),
             ),
-          ),
+          ],
         ),
       ),
     );
@@ -90,6 +100,22 @@ class StatusChipBar extends StatelessWidget {
       case StatusKind.idle:
         return null;
     }
+  }
+
+  IconData? _iconFor(
+    GameStatus? s,
+    bool animating,
+    GameMode? mode,
+    int? player,
+  ) {
+    if (animating &&
+        mode != null &&
+        mode != GameMode.localPvP &&
+        player == 2) {
+      return GameIcons.ai;
+    }
+    if (s == null) return null;
+    return GameIcons.forStatus(s.kind);
   }
 
   Color _colorFor(GameStatus? s, int? player) {

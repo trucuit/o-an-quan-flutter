@@ -6,7 +6,8 @@ import '../../theme/game_play_theme.dart';
 import '../../theme/game_theme.dart';
 import 'game_layout.dart';
 
-/// Score strip — active turn shown via border; pool details in tooltip only.
+/// Score strip — active turn shown via a full accent ring, brighter paper,
+/// and a soft accent shadow; pool details in tooltip only.
 class GamePlayerRail extends StatelessWidget {
   final int playerNumber;
   final bool isActive;
@@ -29,10 +30,16 @@ class GamePlayerRail extends StatelessWidget {
     this.axis = Axis.vertical,
   });
 
+  /// Active-state ring width — thicker than the inactive hairline so the
+  /// current turn reads at a glance without axis-specific tuning.
+  static const double _activeBorderWidth = 2.5;
+  static const double _inactiveBorderWidth = 1.5;
+
   @override
   Widget build(BuildContext context) {
     final isP1 = playerNumber == 1;
     final color = isP1 ? GamePlayTheme.p1 : GamePlayTheme.p2;
+    final activeShadow = isP1 ? GameTheme.activeShadowP1 : GameTheme.activeShadowP2;
     final icon = isP1 ? GameIcons.player1 : (mode == GameMode.localPvP ? GameIcons.player2 : GameIcons.ai);
     final horizontal = axis == Axis.horizontal;
 
@@ -68,8 +75,10 @@ class GamePlayerRail extends StatelessWidget {
                 horizontal: horizontal ? 12 : 6,
               ),
               decoration: BoxDecoration(
-                // Opaque paper chip so the score stays legible on the wood board.
-                color: GameTheme.paper.withValues(alpha: isActive ? 0.98 : 0.92),
+                // Opaque paper chip so the score stays legible on the wood board;
+                // active turn gets a brighter chip plus a full accent ring so it
+                // reads at a glance, not just a stronger edge on one side.
+                color: isActive ? GameTheme.paper : GameTheme.paper.withValues(alpha: 0.92),
                 borderRadius: BorderRadius.circular(10),
                 boxShadow: [
                   BoxShadow(
@@ -77,14 +86,11 @@ class GamePlayerRail extends StatelessWidget {
                     blurRadius: 6,
                     offset: const Offset(0, 2),
                   ),
+                  if (isActive) ...activeShadow,
                 ],
-                border: Border(
-                  left: horizontal
-                      ? BorderSide.none
-                      : BorderSide(color: isActive ? color : color.withValues(alpha: 0.35), width: 3),
-                  bottom: horizontal
-                      ? BorderSide(color: isActive ? color : color.withValues(alpha: 0.35), width: 3)
-                      : BorderSide.none,
+                border: Border.all(
+                  color: isActive ? color : color.withValues(alpha: 0.35),
+                  width: isActive ? _activeBorderWidth : _inactiveBorderWidth,
                 ),
               ),
               child: horizontal

@@ -96,36 +96,10 @@ class _TutorialScreenState extends State<TutorialScreen> {
                   border: Border.all(color: GameTheme.woodDeep.withValues(alpha: 0.15)),
                   boxShadow: GameTheme.glassShadows,
                 ),
-                child: Column(
-                  children: [
-                    Expanded(
-                      child: Center(
-                        child: _currentStep == 0
-                            ? const TutorialBoardDiagram()
-                            : Icon(
-                                _stepIcons[_currentStep],
-                                size: 48,
-                                color: GameTheme.primaryP2,
-                              ),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    FittedBox(
-                      fit: BoxFit.scaleDown,
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 8),
-                        child: Text(
-                          _stepCaptions[_currentStep],
-                          textAlign: TextAlign.center,
-                          maxLines: 2,
-                          style: GameTheme.bodyStyle.copyWith(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
+                child: Center(
+                  child: _currentStep == 0
+                      ? _boardStep()
+                      : _iconStep(),
                 ),
               ),
             ),
@@ -159,6 +133,64 @@ class _TutorialScreenState extends State<TutorialScreen> {
               ],
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  /// Step 1: board diagram sized to fill most of the card, with the caption
+  /// pinned just beneath it instead of floating in leftover space.
+  Widget _boardStep() {
+    // Diagram takes all space left after the caption (via Expanded) so it fills
+    // the card on large screens yet never overflows on short viewports.
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        const Expanded(child: Center(child: TutorialBoardDiagram())),
+        const SizedBox(height: 12),
+        _caption(),
+      ],
+    );
+  }
+
+  /// Steps 2-6: one large icon centered with the caption directly below it,
+  /// so the pair reads as a single balanced unit instead of an icon
+  /// stranded in a tall empty area.
+  Widget _iconStep() {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        // FittedBox keeps the icon at 96 when there's room but scales it down
+        // on short viewports so the step never overflows the card.
+        Expanded(
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Icon(
+              _stepIcons[_currentStep],
+              size: 96,
+              color: GameTheme.primaryP2,
+            ),
+          ),
+        ),
+        const SizedBox(height: 16),
+        _caption(),
+      ],
+    );
+  }
+
+  Widget _caption() {
+    return FittedBox(
+      fit: BoxFit.scaleDown,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8),
+        child: Text(
+          _stepCaptions[_currentStep],
+          textAlign: TextAlign.center,
+          maxLines: 2,
+          style: GameTheme.bodyStyle.copyWith(
+            fontSize: 15,
+            fontWeight: FontWeight.w500,
+          ),
         ),
       ),
     );

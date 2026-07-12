@@ -25,8 +25,8 @@ android {
     }
 
     defaultConfig {
-        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId = "com.game.o_an_quan"
+        // Public Play Store package name (permanent). Internal namespace stays as-is.
+        applicationId = "com.tructt.oanquan"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion

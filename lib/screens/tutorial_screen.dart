@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import '../models/game_state.dart';
 import '../theme/game_theme.dart';
 import '../theme/game_icons.dart';
 import '../widgets/no_scroll_scaffold.dart';
 import '../widgets/icon_action_button.dart';
+import '../widgets/tutorial_board_diagram.dart';
+import 'game_screen.dart';
 
 class TutorialScreen extends StatefulWidget {
   const TutorialScreen({super.key});
@@ -34,6 +37,8 @@ class _TutorialScreenState extends State<TutorialScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isLast = _currentStep == _stepCaptions.length - 1;
+
     return NoScrollScaffold(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
@@ -50,7 +55,7 @@ class _TutorialScreenState extends State<TutorialScreen> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(GameIcons.tutorial, color: Colors.white, size: 20),
+                      const Icon(GameIcons.tutorial, color: GameTheme.ink, size: 20),
                       const SizedBox(width: 8),
                       Text(
                         '${_currentStep + 1}/${_stepCaptions.length}',
@@ -72,7 +77,9 @@ class _TutorialScreenState extends State<TutorialScreen> {
                   width: _currentStep == index ? 20 : 8,
                   height: 8,
                   decoration: BoxDecoration(
-                    color: _currentStep == index ? GameTheme.primaryP2 : Colors.white24,
+                    color: _currentStep == index
+                        ? GameTheme.primaryP2
+                        : GameTheme.inkMuted.withValues(alpha: 0.3),
                     borderRadius: BorderRadius.circular(4),
                   ),
                 );
@@ -84,20 +91,25 @@ class _TutorialScreenState extends State<TutorialScreen> {
                 width: double.infinity,
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: GameTheme.cardBackground.withOpacity(0.7),
+                  color: GameTheme.cardBackground,
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: Colors.white.withOpacity(0.06)),
+                  border: Border.all(color: GameTheme.woodDeep.withValues(alpha: 0.15)),
                   boxShadow: GameTheme.glassShadows,
                 ),
                 child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(
-                      _stepIcons[_currentStep],
-                      size: 56,
-                      color: GameTheme.primaryP2,
+                    Expanded(
+                      child: Center(
+                        child: _currentStep == 0
+                            ? const TutorialBoardDiagram()
+                            : Icon(
+                                _stepIcons[_currentStep],
+                                size: 48,
+                                color: GameTheme.primaryP2,
+                              ),
+                      ),
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 12),
                     FittedBox(
                       fit: BoxFit.scaleDown,
                       child: Padding(
@@ -106,10 +118,9 @@ class _TutorialScreenState extends State<TutorialScreen> {
                           _stepCaptions[_currentStep],
                           textAlign: TextAlign.center,
                           maxLines: 2,
-                          style: TextStyle(
-                            color: Colors.white.withOpacity(0.9),
+                          style: GameTheme.bodyStyle.copyWith(
                             fontSize: 15,
-                            height: 1.4,
+                            fontWeight: FontWeight.w500,
                           ),
                         ),
                       ),
@@ -130,17 +141,18 @@ class _TutorialScreenState extends State<TutorialScreen> {
                       : null,
                 ),
                 IconActionButton(
-                  icon: _currentStep == _stepCaptions.length - 1
-                      ? GameIcons.play
-                      : GameIcons.next,
-                  semanticsLabel: _currentStep == _stepCaptions.length - 1
-                      ? GameIcons.semanticsLabel(GameIcons.play)
-                      : GameIcons.semanticsLabel(GameIcons.next),
+                  icon: isLast ? GameIcons.play : GameIcons.next,
+                  semanticsLabel: isLast ? 'Chơi ngay' : GameIcons.semanticsLabel(GameIcons.next),
                   onPressed: () {
-                    if (_currentStep < _stepCaptions.length - 1) {
+                    if (!isLast) {
                       setState(() => _currentStep++);
                     } else {
-                      Navigator.pop(context);
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const GameScreen(mode: GameMode.localPvP),
+                        ),
+                      );
                     }
                   },
                 ),

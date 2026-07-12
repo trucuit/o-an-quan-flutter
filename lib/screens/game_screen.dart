@@ -1,13 +1,21 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import '../models/game_state.dart';
+import 'package:flutter/services.dart';
+import '../audio/sound_player.dart';
 import '../controllers/game_controller.dart';
+import '../models/game_state.dart';
+import '../models/game_status.dart';
+import '../theme/app_breakpoints.dart';
 import '../theme/game_theme.dart';
-import '../theme/game_icons.dart';
 import '../widgets/board_widget.dart';
-import '../widgets/score_board.dart';
-import '../widgets/direction_selector.dart';
-import '../widgets/status_chip_bar.dart';
-import '../widgets/icon_action_button.dart';
+import '../widgets/haptics.dart';
+import '../widgets/game/game_bottom_hud.dart';
+import '../widgets/game/game_layout.dart';
+import '../widgets/game/game_over_overlay.dart';
+import '../widgets/game/game_player_rail.dart';
+import '../widgets/game/game_reset_dialog.dart';
+import '../widgets/game/game_rules_dialog.dart';
+import '../widgets/game/game_top_bar.dart';
 
 class GameScreen extends StatefulWidget {
   final GameMode mode;
@@ -20,15 +28,62 @@ class GameScreen extends StatefulWidget {
 
 class _GameScreenState extends State<GameScreen> {
   late GameController _controller;
+  GameStatus? _lastFeedbackStatus;
 
   @override
   void initState() {
     super.initState();
     _controller = GameController(mode: widget.mode);
+    _lastFeedbackStatus = _controller.state.currentStatus;
+    _controller.addListener(_emitFeedback);
+    _enterFullScreen();
+  }
+
+  /// Fires haptics + SFX as the controller streams per-step move frames.
+  void _emitFeedback() {
+    final status = _controller.state.currentStatus;
+    if (status == null || identical(status, _lastFeedbackStatus)) return;
+    _lastFeedbackStatus = status;
+    switch (status.kind) {
+      case StatusKind.pick:
+      case StatusKind.sow:
+        Haptics.tick();
+        SoundPlayer.instance.sow();
+      case StatusKind.capture:
+        Haptics.capture();
+        SoundPlayer.instance.capture();
+      case StatusKind.refill:
+      case StatusKind.borrow:
+        Haptics.tick();
+      case StatusKind.idle:
+      case StatusKind.stop:
+      case StatusKind.turn:
+      case StatusKind.gameOver:
+        break;
+    }
+  }
+
+  void _enterFullScreen() {
+    // Immersive fullscreen only makes sense on mobile; desktop/web stay
+    // edge-to-edge (set globally in main).
+    final isMobile = !kIsWeb &&
+        (defaultTargetPlatform == TargetPlatform.android ||
+            defaultTargetPlatform == TargetPlatform.iOS);
+    if (!isMobile) return;
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+    SystemChrome.setSystemUIOverlayStyle(
+      const SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        systemNavigationBarColor: Colors.transparent,
+        systemNavigationBarDividerColor: Colors.transparent,
+      ),
+    );
   }
 
   @override
   void dispose() {
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+    _controller.removeListener(_emitFeedback);
     _controller.dispose();
     super.dispose();
   }
@@ -37,331 +92,137 @@ class _GameScreenState extends State<GameScreen> {
   Widget build(BuildContext context) {
     return ListenableBuilder(
       listenable: _controller,
-      builder: (context, child) {
+      builder: (context, _) {
         final state = _controller.state;
-        final selectedIndex = _controller.selectedSquareIndex;
+        final selected = _controller.selectedSquareIndex;
+        final isGameOver = state.phase == GamePhase.gameOver;
 
         return Scaffold(
           backgroundColor: GameTheme.background,
-          body: Stack(
-            children: [
-              SafeArea(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        flex: 1,
-                        child: Center(
-                          child: PlayerPanel(
-                            playerNumber: 2,
-                            isActive: state.activePlayer == 2 && state.phase != GamePhase.gameOver,
-                            score: state.player2Score,
-                            citizenPool: state.player2CapturedPool,
-                            mandarinPool: state.player2MandarinCaptured,
-                            debt: state.player2Debt,
-                            mode: state.mode,
-                          ),
-                        ),
-                      ),
-                      Expanded(
-                        flex: 6,
-                        child: Column(
-                          children: [
-                            _buildHeader(),
-                            Expanded(
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(vertical: 4),
-                                child: Center(
-                                  child: BoardWidget(
-                                    board: state.board,
-                                    activePlayer: state.activePlayer,
-                                    selectedIndex: selectedIndex,
-                                    isAnimating: _controller.isAnimating,
-                                    onSquareTap: _controller.selectSquare,
-                                  ),
-                                ),
-                              ),
-                            ),
-                            StatusChipBar(status: state.currentStatus),
-                            const SizedBox(height: 6),
-                            _buildControls(state),
-                          ],
-                        ),
-                      ),
-                      Expanded(
-                        flex: 1,
-                        child: Center(
-                          child: PlayerPanel(
-                            playerNumber: 1,
-                            isActive: state.activePlayer == 1 && state.phase != GamePhase.gameOver,
-                            score: state.player1Score,
-                            citizenPool: state.player1CapturedPool,
-                            mandarinPool: state.player1MandarinCaptured,
-                            debt: state.player1Debt,
-                            mode: state.mode,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              if (selectedIndex != null)
-                Positioned.fill(
-                  child: Container(
-                    color: Colors.black.withValues(alpha: GameTheme.scrimLight),
-                    child: DirectionSelector(
-                      squareIndex: selectedIndex,
-                      onDirectionSelect: _controller.playMove,
-                      onCancel: _controller.cancelSelection,
+          resizeToAvoidBottomInset: false,
+          body: Padding(
+            padding: GameLayout.arenaPadding(context),
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                Column(
+                  children: [
+                    GameTopBar(
+                      mode: widget.mode,
+                      canNavigateBack: !_controller.isAnimating,
+                      onBack: () => Navigator.pop(context),
+                      onRestart: _confirmRestart,
                     ),
-                  ),
+                    Expanded(child: _buildArena(state, selected)),
+                    GameBottomHud(
+                      status: state.currentStatus,
+                      canUndo: !_controller.isAnimating && !isGameOver,
+                      isAnimating: _controller.isAnimating,
+                      mode: state.mode,
+                      activePlayer: state.activePlayer,
+                      onUndo: _controller.undo,
+                      onRules: () => showGameRulesDialog(context),
+                    ),
+                  ],
                 ),
-              if (state.phase == GamePhase.gameOver) _buildGameOverOverlay(state),
-            ],
+                if (isGameOver)
+                  GameOverOverlay(
+                    state: state,
+                    onHome: () => Navigator.pop(context),
+                    onRestart: () => _controller.resetGame(widget.mode),
+                  ),
+              ],
+            ),
           ),
         );
       },
     );
   }
 
-  Widget _buildHeader() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  Widget _buildArena(GameState state, int? selected) {
+    return AppBreakpoints.isLandscape(context)
+        ? _buildLandscapeArena(state, selected)
+        : _buildPortraitArena(state, selected);
+  }
+
+  /// Landscape: board fills width, rails overlay the side gutters.
+  Widget _buildLandscapeArena(GameState state, int? selected) {
+    return Stack(
+      fit: StackFit.expand,
       children: [
-        IconActionButton(
-          icon: GameIcons.back,
-          semanticsLabel: GameIcons.semanticsLabel(GameIcons.home),
-          onPressed: _controller.isAnimating ? null : () => Navigator.pop(context),
-        ),
-        Tooltip(
-          message: _modeSemanticsLabel(),
-          child: Icon(GameIcons.forMode(widget.mode), color: Colors.white, size: 24),
-        ),
-        IconActionButton(
-          icon: GameIcons.restart,
-          semanticsLabel: GameIcons.semanticsLabel(GameIcons.restart),
-          onPressed: _showResetConfirmation,
-        ),
-      ],
-    );
-  }
-
-  String _modeSemanticsLabel() {
-    switch (widget.mode) {
-      case GameMode.localPvP:
-        return GameIcons.semanticsLabel(GameIcons.pvp);
-      case GameMode.vsHardAI:
-        return GameIcons.semanticsLabel(GameIcons.aiHard);
-      case GameMode.vsMediumAI:
-        return GameIcons.semanticsLabel(GameIcons.aiMedium);
-      case GameMode.vsEasyAI:
-        return 'Đấu máy dễ';
-    }
-  }
-
-  Widget _buildControls(GameState state) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        IconActionButton(
-          icon: GameIcons.undo,
-          semanticsLabel: GameIcons.semanticsLabel(GameIcons.undo),
-          onPressed: _controller.isAnimating || state.phase == GamePhase.gameOver
-              ? null
-              : _controller.undo,
-        ),
-        const SizedBox(width: 16),
-        IconActionButton(
-          icon: GameIcons.rules,
-          semanticsLabel: GameIcons.semanticsLabel(GameIcons.rules),
-          onPressed: _showRulesOverlay,
-        ),
-      ],
-    );
-  }
-
-  Widget _buildGameOverOverlay(GameState state) {
-    final isP1Winner = state.player1Score > state.player2Score;
-    final isTie = state.player1Score == state.player2Score;
-    final resultIcon = isTie
-        ? GameIcons.tie
-        : (isP1Winner ? GameIcons.win : GameIcons.ai);
-    final textColor = isTie
-        ? GameTheme.mandarinColor
-        : (isP1Winner ? GameTheme.primaryP1 : GameTheme.primaryP2);
-
-    return Positioned.fill(
-      child: Container(
-        color: Colors.black.withValues(alpha: GameTheme.scrimHeavy),
-        child: Center(
-          child: Container(
-            margin: const EdgeInsets.symmetric(horizontal: 32),
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: GameTheme.cardBackground,
-              borderRadius: BorderRadius.circular(24),
-              border: Border.all(color: textColor.withOpacity(0.3), width: 1.5),
-              boxShadow: GameTheme.glassShadows,
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(resultIcon, size: 48, color: textColor),
-                const SizedBox(height: 16),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    _buildScoreResult(GameIcons.player1, state.player1Score, GameTheme.primaryP1),
-                    Container(width: 1, height: 40, color: Colors.white24),
-                    _buildScoreResult(
-                      state.mode == GameMode.localPvP ? GameIcons.player2 : GameIcons.ai,
-                      state.player2Score,
-                      GameTheme.primaryP2,
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 20),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    IconActionButton(
-                      icon: GameIcons.home,
-                      semanticsLabel: GameIcons.semanticsLabel(GameIcons.home),
-                      onPressed: () => Navigator.pop(context),
-                    ),
-                    const SizedBox(width: 16),
-                    IconActionButton(
-                      icon: GameIcons.restart,
-                      semanticsLabel: GameIcons.semanticsLabel(GameIcons.restart),
-                      color: textColor,
-                      backgroundColor: textColor.withOpacity(0.2),
-                      onPressed: () => _controller.resetGame(widget.mode),
-                    ),
-                  ],
-                ),
-              ],
-            ),
+        _board(state, selected),
+        Positioned(
+          left: 0,
+          width: GameLayout.railGutterWidth,
+          top: 0,
+          bottom: 0,
+          child: Align(
+            alignment: const Alignment(0, GameLayout.railAlignP2Y),
+            child: _playerRail(state, 2, Axis.vertical),
           ),
         ),
-      ),
+        Positioned(
+          right: 0,
+          width: GameLayout.railGutterWidth,
+          top: 0,
+          bottom: 0,
+          child: Align(
+            alignment: const Alignment(0, GameLayout.railAlignP1Y),
+            child: _playerRail(state, 1, Axis.vertical),
+          ),
+        ),
+      ],
     );
   }
 
-  Widget _buildScoreResult(IconData icon, int score, Color color) {
+  /// Portrait: rails stack above (P2) and below (P1) the board.
+  Widget _buildPortraitArena(GameState state, int? selected) {
     return Column(
       children: [
-        Icon(icon, color: Colors.white70, size: 20),
-        const SizedBox(height: 4),
-        Text(
-          '$score',
-          style: TextStyle(color: color, fontSize: 28, fontWeight: FontWeight.w900),
+        Padding(
+          padding: const EdgeInsets.only(bottom: GameTheme.spaceSm),
+          child: _playerRail(state, 2, Axis.horizontal),
+        ),
+        Expanded(child: _board(state, selected, sideGutter: GameTheme.spaceSm)),
+        Padding(
+          padding: const EdgeInsets.only(top: GameTheme.spaceSm),
+          child: _playerRail(state, 1, Axis.horizontal),
         ),
       ],
     );
   }
 
-  void _showResetConfirmation() {
-    showDialog(
-      context: context,
-      barrierColor: Colors.black.withValues(alpha: GameTheme.scrimLight),
-      builder: (context) {
-        return Semantics(
-          label: 'Xác nhận chơi lại',
-          child: AlertDialog(
-            backgroundColor: GameTheme.cardBackground,
-            title: Row(
-              children: [
-                const Icon(GameIcons.warning, color: GameTheme.accent, size: 22),
-                const SizedBox(width: GameTheme.spaceSm),
-                Expanded(
-                  child: Text(
-                    'Chơi lại?',
-                    style: GameTheme.headingStyle.copyWith(fontSize: 18),
-                  ),
-                ),
-              ],
-            ),
-            content: Row(
-              children: [
-                const Icon(GameIcons.restart, color: GameTheme.textSecondary, size: 28),
-                const SizedBox(width: GameTheme.spaceMd),
-                Expanded(
-                  child: Text(
-                    'Hủy ván hiện tại và bắt đầu lại.',
-                    style: GameTheme.bodyStyle.copyWith(color: GameTheme.textSecondary),
-                  ),
-                ),
-              ],
-            ),
-            actions: [
-              IconActionButton(
-                icon: GameIcons.cancel,
-                semanticsLabel: GameIcons.semanticsLabel(GameIcons.cancel),
-                onPressed: () => Navigator.pop(context),
-              ),
-              IconActionButton(
-                icon: GameIcons.confirm,
-                semanticsLabel: 'Đồng ý chơi lại',
-                color: GameTheme.accent,
-                onPressed: () {
-                  Navigator.pop(context);
-                  _controller.resetGame(widget.mode);
-                },
-              ),
-            ],
-          ),
-        );
-      },
+  Widget _board(GameState state, int? selected, {double? sideGutter}) {
+    return BoardWidget(
+      board: state.board,
+      activePlayer: state.activePlayer,
+      selectedIndex: selected,
+      isAnimating: _controller.isAnimating,
+      onSquareTap: _controller.selectSquare,
+      onDirectionSelect: selected != null ? _controller.playMove : null,
+      onCancelDirection: selected != null ? _controller.cancelSelection : null,
+      sideGutter: sideGutter ?? GameLayout.railGutterWidth,
     );
   }
 
-  void _showRulesOverlay() {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return Dialog(
-          backgroundColor: GameTheme.cardBackground,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          child: Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(GameIcons.rules, color: Colors.white, size: 32),
-                const SizedBox(height: 16),
-                _ruleRow(GameIcons.sow, 'Rải từng viên theo chiều chọn'),
-                _ruleRow(GameIcons.pick, 'Nhặt tiếp nếu ô sau có quân'),
-                _ruleRow(GameIcons.capture, 'Ăn khi ô sau trống, ô kế có quân'),
-                _ruleRow(GameIcons.stop, 'Dừng khi chạm Ô Quan'),
-                _ruleRow(GameIcons.refill, 'Hết quân → rải 5 từ kho'),
-                const SizedBox(height: 12),
-                IconActionButton(
-                  icon: GameIcons.cancel,
-                  semanticsLabel: 'Đóng',
-                  onPressed: () => Navigator.pop(context),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
+  Widget _playerRail(GameState state, int playerNumber, Axis axis) {
+    final isP1 = playerNumber == 1;
+    return GamePlayerRail(
+      playerNumber: playerNumber,
+      isActive: state.activePlayer == playerNumber && state.phase != GamePhase.gameOver,
+      score: isP1 ? state.player1Score : state.player2Score,
+      citizenPool: isP1 ? state.player1CapturedPool : state.player2CapturedPool,
+      mandarinPool: isP1 ? state.player1MandarinCaptured : state.player2MandarinCaptured,
+      debt: isP1 ? state.player1Debt : state.player2Debt,
+      mode: state.mode,
+      axis: axis,
     );
   }
 
-  Widget _ruleRow(IconData icon, String hint) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Row(
-        children: [
-          Icon(icon, size: 18, color: GameTheme.primaryP2),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(hint, style: const TextStyle(color: Colors.white70, fontSize: 12)),
-          ),
-        ],
-      ),
-    );
+  Future<void> _confirmRestart() async {
+    final confirmed = await showGameResetDialog(context);
+    if (confirmed == true && mounted) {
+      _controller.resetGame(widget.mode);
+    }
   }
 }

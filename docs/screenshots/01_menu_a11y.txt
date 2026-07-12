@@ -1,0 +1,8 @@
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "Found these elements on screen: [{\"type\":\"android.view.View\",\"text\":\"\",\"label\":\"Ô ĂN QUAN\",\"coordinates\":{\"x\":920,\"y\":32,\"width\":546,\"height\":99}},{\"type\":\"android.widget.Button\",\"text\":\"\",\"label\":\"Chơi hai người&#10;Chơi Hai Người\",\"coordinates\":{\"x\":179,\"y\":163,\"width\":948,\"height\":406}},{\"type\":\"android.widget.Button\",\"text\":\"\",\"label\":\"Máy đối thủ&#10;Máy khó\",\"coordinates\":{\"x\":1159,\"y\":163,\"width\":875,\"height\":406}},{\"type\":\"android.widget.Button\",\"text\":\"\",\"label\":\"Đấu máy thường&#10;Máy TB\",\"coordinates\":{\"x\":179,\"y\":600,\"width\":948,\"height\":407}},{\"type\":\"android.widget.Button\",\"text\":\"\",\"label\":\"Hướng dẫn&#10;Hướng dẫn\",\"coordinates\":{\"x\":1159,\"y\":600,\"width\":875,\"height\":407}},{\"type\":\"android.view.View\",\"text\":\"\",\"label\":\"Trò chơi dân gian Việt Nam\",\"coordinates\":{\"x\":1122,\"y\":1006,\"width\":42,\"height\":43}},{\"type\":\"android.widget.FrameLayout\",\"text\":\"\",\"label\":\"\",\"identifier\":\"android:id/content\",\"coordinates\":{\"x\":0,\"y\":0,\"width\":2034,\"height\":1080}},{\"type\":\"android.view.View\",\"text\":\"\",\"label\":\"\",\"identifier\":\"android:id/navigationBarBackground\",\"coordinates\":{\"x\":0,\"y\":0,\"width\":126,\"height\":1080}}]"
+    }
+  ]
+}

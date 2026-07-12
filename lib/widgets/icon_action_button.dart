@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../theme/game_theme.dart';
+import 'haptics.dart';
 
 class IconActionButton extends StatelessWidget {
   final IconData icon;
@@ -31,17 +32,22 @@ class IconActionButton extends StatelessWidget {
         button: true,
         enabled: onPressed != null,
         child: IconButton(
-          onPressed: onPressed,
+          onPressed: onPressed == null
+              ? null
+              : () {
+                  Haptics.tick();
+                  onPressed!();
+                },
           icon: Icon(icon, size: size),
-          color: color ?? Colors.white,
-          disabledColor: Colors.white.withValues(alpha: GameTheme.disabledOpacity),
-          padding: const EdgeInsets.all(12),
+          color: color ?? GameTheme.ink,
+          disabledColor: GameTheme.ink.withValues(alpha: GameTheme.disabledOpacity),
+          padding: const EdgeInsets.all(10),
           constraints: const BoxConstraints(
             minWidth: GameTheme.minTouchTarget,
             minHeight: GameTheme.minTouchTarget,
           ),
           style: IconButton.styleFrom(
-            backgroundColor: backgroundColor ?? Colors.white.withOpacity(0.08),
+            backgroundColor: backgroundColor ?? GameTheme.paperSunken.withValues(alpha: 0.7),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
             ),

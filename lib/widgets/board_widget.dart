@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import '../models/board_square.dart';
-import '../models/game_state.dart';
+import '../theme/game_theme.dart';
+import 'board/board_painter.dart';
+import 'game/game_layout.dart';
+import 'direction_selector.dart';
 import 'square_widget.dart';
 
 class BoardWidget extends StatelessWidget {
@@ -9,6 +12,12 @@ class BoardWidget extends StatelessWidget {
   final int? selectedIndex;
   final bool isAnimating;
   final Function(int) onSquareTap;
+  final void Function(bool clockwise)? onDirectionSelect;
+  final VoidCallback? onCancelDirection;
+
+  /// Horizontal padding reserved on each side. Landscape reserves room for the
+  /// overlay rails; portrait passes a small value since rails sit above/below.
+  final double sideGutter;
 
   const BoardWidget({
     super.key,
@@ -17,57 +26,68 @@ class BoardWidget extends StatelessWidget {
     required this.selectedIndex,
     required this.isAnimating,
     required this.onSquareTap,
+    this.onDirectionSelect,
+    this.onCancelDirection,
+    this.sideGutter = GameLayout.railGutterWidth,
   });
+
+  /// Width : height ratio that keeps the pits from stretching. The board is
+  /// centered and letterboxed so portrait shows a correctly-proportioned board
+  /// instead of tall, narrow pits.
+  static const double boardAspectRatio = 2.4;
 
   @override
   Widget build(BuildContext context) {
+    return Center(
+      child: AspectRatio(
+        aspectRatio: boardAspectRatio,
+        child: _buildBoard(context),
+      ),
+    );
+  }
+
+  Widget _buildBoard(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        // Calculate dynamic dimensions based on screen space
-        final double totalWidth = constraints.maxWidth;
         final double totalHeight = constraints.maxHeight;
+        const double rowGap = 4;
+        const double cellVerticalPadding = 4; // symmetric 2px top + bottom per row
+        final double unitHeight = ((totalHeight - rowGap - cellVerticalPadding * 2) / 2)
+            .clamp(20.0, totalHeight / 2);
+        final double mandarinHeight = unitHeight * 2 + rowGap + cellVerticalPadding;
 
-        // The board layout consists of: [Left Mandarin (1 unit)] + [5 Citizen Squares (5 units)] + [Right Mandarin (1 unit)] = 7 units wide + spacing
-        // Width needs ~7.2 units, Height needs ~2.2 units + 16px padding.
-        final double maxUnitWidth = totalWidth / 7.2;
-        final double maxUnitHeight = totalHeight / 2.4; 
-        
-        // Ensure the unit respects both constraints (aspect ratio unitHeight = unitWidth * 1.1)
-        final double unitWidthByWidth = maxUnitWidth;
-        final double unitWidthByHeight = maxUnitHeight / 1.1;
-        
-        final double unitWidth = unitWidthByWidth < unitWidthByHeight ? unitWidthByWidth : unitWidthByHeight;
-        final double unitHeight = unitWidth * 1.1;
-
-        return Container(
-          padding: const EdgeInsets.all(8.0),
-          decoration: BoxDecoration(
-            color: Colors.black.withOpacity(0.2),
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(
-              color: Colors.white.withOpacity(0.05),
-              width: 1,
+        return CustomPaint(
+          painter: const BoardPainter(),
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(GameTheme.radiusCard),
+              border: Border.all(
+                color: GameTheme.woodDeep.withValues(alpha: 0.5),
+              ),
             ),
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
+            child: Padding(
+              padding: EdgeInsets.symmetric(horizontal: sideGutter),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
               // Left Mandarin Square (Index 11)
-              SizedBox(
-                width: unitWidth * 1.1,
-                height: unitHeight * 2 + 8, // Spans both rows + spacing
-                child: SquareWidget(
-                  square: board[11],
-                  isSelectable: false,
-                  isSelected: selectedIndex == 11,
-                  onTap: () {},
+              Expanded(
+                flex: 11,
+                child: SizedBox(
+                  height: mandarinHeight,
+                  child: SquareWidget(
+                    square: board[11],
+                    isSelectable: false,
+                    isSelected: selectedIndex == 11,
+                    onTap: () {},
+                  ),
                 ),
               ),
               const SizedBox(width: 4),
 
               // Citizen Squares column (5x2 grid)
               Expanded(
+                flex: 50,
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -79,22 +99,16 @@ class BoardWidget extends StatelessWidget {
                             !isAnimating &&
                             board[index].citizenCount > 0;
                         return Expanded(
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 2.0, vertical: 2.0),
-                            child: SizedBox(
-                              height: unitHeight,
-                              child: SquareWidget(
-                                square: board[index],
-                                isSelectable: isSelectable,
-                                isSelected: selectedIndex == index,
-                                onTap: () => onSquareTap(index),
-                              ),
-                            ),
+                          child: _citizenPitCell(
+                            index: index,
+                            unitHeight: unitHeight,
+                            isSelectable: isSelectable,
+                            pickerBelow: true,
                           ),
                         );
                       }).toList(),
                     ),
-                    const SizedBox(height: 4),
+                    SizedBox(height: rowGap),
                     // Bottom Row: Player 1 (Indices 0, 1, 2, 3, 4 from left to right)
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -103,17 +117,11 @@ class BoardWidget extends StatelessWidget {
                             !isAnimating &&
                             board[index].citizenCount > 0;
                         return Expanded(
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 2.0, vertical: 2.0),
-                            child: SizedBox(
-                              height: unitHeight,
-                              child: SquareWidget(
-                                square: board[index],
-                                isSelectable: isSelectable,
-                                isSelected: selectedIndex == index,
-                                onTap: () => onSquareTap(index),
-                              ),
-                            ),
+                          child: _citizenPitCell(
+                            index: index,
+                            unitHeight: unitHeight,
+                            isSelectable: isSelectable,
+                            pickerBelow: false,
                           ),
                         );
                       }).toList(),
@@ -124,20 +132,70 @@ class BoardWidget extends StatelessWidget {
               const SizedBox(width: 4),
 
               // Right Mandarin Square (Index 5)
-              SizedBox(
-                width: unitWidth * 1.1,
-                height: unitHeight * 2 + 8, // Spans both rows + spacing
-                child: SquareWidget(
-                  square: board[5],
-                  isSelectable: false,
-                  isSelected: selectedIndex == 5,
-                  onTap: () {},
+              Expanded(
+                flex: 11,
+                child: SizedBox(
+                  height: mandarinHeight,
+                  child: SquareWidget(
+                    square: board[5],
+                    isSelectable: false,
+                    isSelected: selectedIndex == 5,
+                    onTap: () {},
+                  ),
                 ),
               ),
-            ],
+              ],
+            ),
+            ),
           ),
         );
       },
+    );
+  }
+
+  Widget _citizenPitCell({
+    required int index,
+    required double unitHeight,
+    required bool isSelectable,
+    required bool pickerBelow,
+  }) {
+    final isSelected = selectedIndex == index;
+    final showPicker = isSelected &&
+        onDirectionSelect != null &&
+        onCancelDirection != null;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 2.0, vertical: 2.0),
+      child: SizedBox(
+        height: unitHeight,
+        child: Stack(
+          clipBehavior: Clip.none,
+          alignment: Alignment.center,
+          children: [
+            IgnorePointer(
+              ignoring: showPicker,
+              child: SquareWidget(
+                square: board[index],
+                isSelectable: isSelectable,
+                isSelected: isSelected,
+                onTap: () => onSquareTap(index),
+              ),
+            ),
+            if (showPicker)
+              Positioned(
+                left: 2,
+                right: 2,
+                top: pickerBelow ? null : 4,
+                bottom: pickerBelow ? 4 : null,
+                child: DirectionSelector(
+                  squareIndex: index,
+                  onDirectionSelect: onDirectionSelect!,
+                  onCancel: onCancelDirection!,
+                ),
+              ),
+          ],
+        ),
+      ),
     );
   }
 }

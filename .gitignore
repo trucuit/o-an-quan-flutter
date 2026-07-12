@@ -46,3 +46,11 @@ app.*.map.json
 
 # Widget Preview related
 .widget_preview/
+
+# Local UI-review screenshot artifacts (not part of the app)
+/review_*.png
+/review_fix_*.png
+/ui_check_*.png
+/ui_redesign_*.png
+/mcp_mobile_game_fixed.png
+/screenshot*.png

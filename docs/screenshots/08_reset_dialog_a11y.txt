@@ -1,0 +1,8 @@
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "Found these elements on screen: [{\"type\":\"android.widget.Button\",\"text\":\"\",\"label\":\"Hủy\",\"coordinates\":{\"x\":884,\"y\":585,\"width\":126,\"height\":126}},{\"type\":\"android.widget.Button\",\"text\":\"\",\"label\":\"Đồng ý chơi lại\",\"coordinates\":{\"x\":1150,\"y\":585,\"width\":126,\"height\":126}},{\"type\":\"android.view.View\",\"text\":\"\",\"label\":\"CHƠI LẠI?&#10;Hủy ván hiện tại và bắt đầu lại từ đầu.\",\"coordinates\":{\"x\":0,\"y\":0,\"width\":2034,\"height\":1080}},{\"type\":\"android.view.View\",\"text\":\"\",\"label\":\"Dismiss\",\"coordinates\":{\"x\":0,\"y\":0,\"width\":2034,\"height\":1080}},{\"type\":\"android.widget.FrameLayout\",\"text\":\"\",\"label\":\"\",\"identifier\":\"android:id/content\",\"coordinates\":{\"x\":0,\"y\":0,\"width\":2034,\"height\":1080}}]"
+    }
+  ]
+}

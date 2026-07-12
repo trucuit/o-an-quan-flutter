@@ -15,8 +15,8 @@ abstract final class GameIcons {
   static const IconData rules = LucideIcons.book_open;
   static const IconData info = LucideIcons.info;
   static const IconData player1 = LucideIcons.user;
-  static const IconData player2 = LucideIcons.user;
-  static const IconData ai = LucideIcons.bot;
+  static const IconData player2 = LucideIcons.circle_user;
+  static const IconData ai = LucideIcons.brain;
   static const IconData citizen = LucideIcons.circle;
   static const IconData mandarin = LucideIcons.gem;
   static const IconData debt = LucideIcons.circle_minus;
@@ -24,17 +24,22 @@ abstract final class GameIcons {
   static const IconData clockwise = LucideIcons.rotate_cw;
   static const IconData counterClockwise = LucideIcons.rotate_ccw;
   static const IconData cancel = LucideIcons.x;
-  static const IconData win = LucideIcons.trophy;
+  static const IconData win = LucideIcons.award;
   static const IconData tie = LucideIcons.handshake;
   static const IconData pick = LucideIcons.sparkles;
-  static const IconData sow = LucideIcons.sparkles;
+  static const IconData sow = LucideIcons.footprints;
   static const IconData capture = LucideIcons.party_popper;
   static const IconData stop = LucideIcons.circle_stop;
   static const IconData refill = LucideIcons.grid_3x3;
   static const IconData borrow = LucideIcons.credit_card;
-  static const IconData square = LucideIcons.layout_grid;
-  static const IconData hardBadge = LucideIcons.bolt;
-  static const IconData mediumBadge = LucideIcons.arrow_right;
+  static const IconData square = LucideIcons.square;
+  // Difficulty level badges — distinct signal-strength icons.
+  static const IconData easyBadge = LucideIcons.signal_low;
+  static const IconData mediumBadge = LucideIcons.signal_medium;
+  static const IconData hardBadge = LucideIcons.signal_high;
+  // Sow-direction arrows (clearer than rotate icons on the board).
+  static const IconData sowRight = LucideIcons.move_right;
+  static const IconData sowLeft = LucideIcons.move_left;
   static const IconData next = LucideIcons.arrow_right;
   static const IconData prev = LucideIcons.arrow_left;
   static const IconData play = LucideIcons.play;
@@ -109,11 +114,14 @@ abstract final class GameIcons {
     refill: 'Rải sân',
     borrow: 'Mượn điểm',
     square: 'Ô cờ',
-    hardBadge: 'Khó',
+    easyBadge: 'Dễ',
     mediumBadge: 'Thường',
+    hardBadge: 'Khó',
+    sowRight: 'Rải sang phải',
+    sowLeft: 'Rải sang trái',
     next: 'Tiếp theo',
     prev: 'Bước trước',
-    play: 'Bắt đầu chơi',
+    play: 'Chơi ngay',
     confirm: 'Xác nhận',
     warning: 'Cảnh báo',
     board: 'Bàn cờ',

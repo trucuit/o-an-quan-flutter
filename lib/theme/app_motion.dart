@@ -6,6 +6,14 @@ abstract final class AppMotion {
   static const Duration medium = Duration(milliseconds: 200);
   static const Duration slow = Duration(milliseconds: 300);
 
+  // Gameplay motion (design-spec §5).
+  static const Duration sowTick = Duration(milliseconds: 200);
+  static const Duration capturePulse = Duration(milliseconds: 260);
+  static const Duration turnSwap = Duration(milliseconds: 240);
+
+  static const Curve hop = Curves.easeInOut;
+  static const Curve pulse = Curves.easeOutBack;
+
   static bool reducedMotion(BuildContext context) =>
       MediaQuery.disableAnimationsOf(context);
 

@@ -1,0 +1,8 @@
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "Found these elements on screen: [{\"type\":\"android.widget.Button\",\"text\":\"\",\"label\":\"Quay lại\",\"coordinates\":{\"x\":179,\"y\":21,\"width\":126,\"height\":126}},{\"type\":\"android.view.View\",\"text\":\"\",\"label\":\"4/6\",\"coordinates\":{\"x\":1150,\"y\":58,\"width\":70,\"height\":52}},{\"type\":\"android.view.View\",\"text\":\"\",\"label\":\"Ô sau trống, ô kế có quân → ăn\",\"coordinates\":{\"x\":837,\"y\":628,\"width\":612,\"height\":55}},{\"type\":\"android.widget.Button\",\"text\":\"\",\"label\":\"Bước trước\",\"coordinates\":{\"x\":179,\"y\":933,\"width\":126,\"height\":126}},{\"type\":\"android.widget.Button\",\"text\":\"\",\"label\":\"Tiếp theo\",\"coordinates\":{\"x\":1981,\"y\":933,\"width\":53,\"height\":126}},{\"type\":\"android.widget.FrameLayout\",\"text\":\"\",\"label\":\"\",\"identifier\":\"android:id/content\",\"coordinates\":{\"x\":0,\"y\":0,\"width\":2034,\"height\":1080}},{\"type\":\"android.view.View\",\"text\":\"\",\"label\":\"\",\"identifier\":\"android:id/navigationBarBackground\",\"coordinates\":{\"x\":0,\"y\":0,\"width\":126,\"height\":1080}}]"
+    }
+  ]
+}

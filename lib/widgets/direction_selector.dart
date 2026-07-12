@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import '../theme/game_play_theme.dart';
 import '../theme/game_theme.dart';
 import '../theme/game_icons.dart';
-import 'icon_action_button.dart';
-import 'scale_pressable.dart';
+import '../utils/square_names.dart';
+import 'haptics.dart';
 
+/// Compact direction bar — fits inside the pit width, no overflow.
 class DirectionSelector extends StatelessWidget {
   final int squareIndex;
   final Function(bool) onDirectionSelect;
@@ -16,59 +18,55 @@ class DirectionSelector extends StatelessWidget {
     required this.onCancel,
   });
 
+  static const double barHeight = 34;
+
   @override
   Widget build(BuildContext context) {
     final isP1 = squareIndex < 5;
-    final accent = isP1 ? GameTheme.primaryP1 : GameTheme.primaryP2;
+    final accent = isP1 ? GamePlayTheme.p1 : GamePlayTheme.p2;
 
     return Semantics(
-      label: 'Chọn chiều rải quân',
-      child: Center(
+      label: 'Chọn chiều rải từ ${SquareNames.display(squareIndex)}',
+      child: Material(
+        color: GameTheme.paperPanel.withValues(alpha: 0.96),
+        elevation: 3,
+        shadowColor: GameTheme.pitShadow.withValues(alpha: 0.35),
+        borderRadius: BorderRadius.circular(barHeight / 2),
+        clipBehavior: Clip.antiAlias,
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+          width: double.infinity,
+          height: barHeight,
           decoration: BoxDecoration(
-            color: GameTheme.cardBackground.withOpacity(0.96),
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: Colors.white.withOpacity(0.08)),
-            boxShadow: GameTheme.glassShadows,
+            border: Border.all(color: accent.withValues(alpha: 0.45)),
+            borderRadius: BorderRadius.circular(barHeight / 2),
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
+          child: Row(
             children: [
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(GameIcons.square, size: 18, color: accent),
-                  const SizedBox(width: 6),
-                  Text(
-                    '$squareIndex',
-                    style: GameTheme.headingStyle.copyWith(fontSize: 18, color: accent),
-                  ),
-                ],
+              Expanded(
+                child: _DirButton(
+                  icon: GameIcons.sowLeft,
+                  label: GameIcons.semanticsLabel(GameIcons.sowLeft),
+                  accent: accent,
+                  onTap: () => onDirectionSelect(false),
+                ),
               ),
-              const SizedBox(height: 20),
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  _buildDirectionButton(
-                    icon: GameIcons.counterClockwise,
-                    semanticsLabel: GameIcons.semanticsLabel(GameIcons.counterClockwise),
-                    onTap: () => onDirectionSelect(false),
-                  ),
-                  const SizedBox(width: 32),
-                  _buildDirectionButton(
-                    icon: GameIcons.clockwise,
-                    semanticsLabel: GameIcons.semanticsLabel(GameIcons.clockwise),
-                    onTap: () => onDirectionSelect(true),
-                  ),
-                ],
+              _divider(),
+              Expanded(
+                child: _DirButton(
+                  icon: GameIcons.sowRight,
+                  label: GameIcons.semanticsLabel(GameIcons.sowRight),
+                  accent: accent,
+                  onTap: () => onDirectionSelect(true),
+                ),
               ),
-              const SizedBox(height: 12),
-              IconActionButton(
-                icon: GameIcons.cancel,
-                semanticsLabel: GameIcons.semanticsLabel(GameIcons.cancel),
-                onPressed: onCancel,
-                size: 18,
+              _divider(),
+              Expanded(
+                child: _DirButton(
+                  icon: GameIcons.cancel,
+                  label: 'Hủy',
+                  accent: GameTheme.inkMuted,
+                  onTap: onCancel,
+                ),
               ),
             ],
           ),
@@ -77,34 +75,45 @@ class DirectionSelector extends StatelessWidget {
     );
   }
 
-  Widget _buildDirectionButton({
-    required IconData icon,
-    required String semanticsLabel,
-    required VoidCallback onTap,
-  }) {
+  Widget _divider() {
+    return Container(
+      width: 1,
+      height: 20,
+      color: GameTheme.woodDeep.withValues(alpha: 0.12),
+    );
+  }
+}
+
+class _DirButton extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color accent;
+  final VoidCallback onTap;
+
+  const _DirButton({
+    required this.icon,
+    required this.label,
+    required this.accent,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
     return Semantics(
-      label: semanticsLabel,
+      label: label,
       button: true,
       child: Tooltip(
-        message: semanticsLabel,
-        child: ScalePressable(
-          onTap: onTap,
-          child: Material(
-            color: Colors.transparent,
-            child: InkWell(
-              onTap: onTap,
-              borderRadius: BorderRadius.circular(16),
-              splashColor: Colors.white.withValues(alpha: 0.1),
-              child: Container(
-                width: GameTheme.minTouchTarget + 24,
-                height: GameTheme.minTouchTarget + 24,
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.04),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
-                ),
-                child: Icon(icon, color: Colors.white, size: 36),
-              ),
+        message: label,
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: () {
+              Haptics.tick();
+              onTap();
+            },
+            child: SizedBox(
+              height: DirectionSelector.barHeight,
+              child: Icon(icon, size: 18, color: accent),
             ),
           ),
         ),

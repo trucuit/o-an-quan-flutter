@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../theme/app_motion.dart';
+import 'haptics.dart';
 
 /// Tap scale feedback (0.97) per ui-ux-pro-max press-feedback rule.
 class ScalePressable extends StatefulWidget {
@@ -27,10 +28,18 @@ class _ScalePressableState extends State<ScalePressable> {
     final scale = _pressed && widget.onTap != null ? 0.97 : 1.0;
 
     return GestureDetector(
+      behavior: widget.onTap != null
+          ? HitTestBehavior.opaque
+          : HitTestBehavior.deferToChild,
       onTapDown: widget.onTap == null ? null : (_) => setState(() => _pressed = true),
       onTapUp: widget.onTap == null ? null : (_) => setState(() => _pressed = false),
       onTapCancel: widget.onTap == null ? null : () => setState(() => _pressed = false),
-      onTap: widget.onTap,
+      onTap: widget.onTap == null
+          ? null
+          : () {
+              Haptics.tick();
+              widget.onTap!();
+            },
       child: AnimatedScale(
         scale: scale,
         duration: duration,

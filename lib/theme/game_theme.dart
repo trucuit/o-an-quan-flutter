@@ -1,32 +1,64 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
-/// Semantic design tokens for Ô Ăn Quan (dark immersive gaming).
+/// Semantic design tokens for Ô Ăn Quan — Traditional Vietnamese daylight theme.
+///
+/// Source of truth: `plans/ui-traditional-vietnamese-redesign/design-spec.md`.
+/// Warm paper surfaces, wood-grain board, ink text, terracotta (P1) / jade (P2)
+/// / aged-gold (mandarin) accents. No neon. Legacy token names are kept as
+/// aliases that now resolve to the new palette so existing widgets keep
+/// compiling while Phase 4 restyles them.
 abstract final class GameTheme {
+  // ── Canonical palette (Vietnamese daylight) ──────────────────────────────
   // Surfaces
-  static const Color background = Color(0xFF0F172A);
-  static const Color boardBackground = Color(0xFF1E293B);
-  static const Color cardBackground = Color(0xFF1E293B);
-  static const Color surfaceElevated = Color(0xFF334155);
+  static const Color paper = Color(0xFFF4E9D8);
+  static const Color paperPanel = Color(0xFFEAD9BD);
+  static const Color paperSunken = Color(0xFFE0CCAA);
+  static const Color woodMid = Color(0xFF9A6B3F);
+  static const Color woodDeep = Color(0xFF6E4423);
+  static const Color pitShadow = Color(0xFF4A2C16);
+  static const Color pitFloor = Color(0xFF7E5630);
 
-  // On-surface text (WCAG AA on dark surfaces)
-  static const Color textPrimary = Color(0xFFF8FAFC);
-  static const Color textSecondary = Color(0xFFCBD5E1);
-  static const Color textMuted = Color(0xFF94A3B8);
+  // Ink / text
+  static const Color ink = Color(0xFF2B2118);
+  static const Color inkMuted = Color(0xFF6E5C49);
+  static const Color inkOnWood = Color(0xFFF4E9D8);
 
-  // Brand / players
-  static const Color primaryP1 = Color(0xFFE2E8F0);
-  static const Color primaryP2 = Color(0xFF94A3B8);
-  static const Color accent = Color(0xFFF97316);
-  static const Color accentMuted = Color(0xFFFB923C);
+  // Accents
+  static const Color accentP1 = Color(0xFFB5462E); // terracotta
+  static const Color accentP2 = Color(0xFF2E7D6B); // jade
+  static const Color accentP2Text = Color(0xFF256456); // jade for small text (AA)
+  static const Color accentGold = Color(0xFFB07D1E); // aged gold (AA on paper)
+  static const Color warningColor = Color(0xFFB5631E);
 
-  static const Color mandarinColor = Color(0xFFF1F5F9);
-  static const Color citizenColor = Color(0xFF94A3B8);
+  // Stones
+  static const Color stoneCitizen = Color(0xFFEDE4D0);
+  static const Color stoneCitizenAlt = Color(0xFF5B7C8D);
+  static const Color stoneCitizenShade = Color(0xFFC7B89C);
+  static const Color stoneMandarin = Color(0xFFC8962E);
+  static const Color stoneMandarinShade = Color(0xFF8A6418);
+
+  // ── Legacy aliases (repointed to new palette) ────────────────────────────
+  static const Color background = paper;
+  static const Color boardBackground = woodMid;
+  static const Color cardBackground = paperPanel;
+  static const Color surfaceElevated = paperSunken;
+  static const Color textPrimary = ink;
+  static const Color textSecondary = inkMuted;
+  static const Color textMuted = inkMuted;
+  static const Color textLight = ink;
+  static const Color primaryP1 = accentP1;
+  static const Color primaryP2 = accentP2;
+  static const Color accent = accentGold;
+  static const Color accentMuted = warningColor;
+  static const Color mandarinColor = stoneMandarin;
+  static const Color citizenColor = accentP2;
 
   // Interaction
   static const double disabledOpacity = 0.38;
-  static const double scrimLight = 0.45;
-  static const double scrimHeavy = 0.6;
-  static const double borderSubtle = 0.08;
+  static const double scrimLight = 0.32;
+  static const double scrimHeavy = 0.5;
+  static const double borderSubtle = 0.15;
 
   // Spacing (4/8dp rhythm)
   static const double spaceXs = 4;
@@ -34,6 +66,11 @@ abstract final class GameTheme {
   static const double spaceMd = 16;
   static const double spaceLg = 24;
   static const double spaceXl = 32;
+
+  // Radii
+  static const double radiusSm = 8;
+  static const double radiusMd = 12;
+  static const double radiusCard = 16;
 
   // Icon sizes
   static const double iconSm = 16;
@@ -43,116 +80,126 @@ abstract final class GameTheme {
   // Touch
   static const double minTouchTarget = 48;
 
-  // Legacy aliases
-  static const Color textLight = textPrimary;
-
+  // ── Gradients (warm, non-neon) ───────────────────────────────────────────
   static const LinearGradient p1Gradient = LinearGradient(
-    colors: [Color(0xFFE2E8F0), Color(0xFF94A3B8)],
+    colors: [Color(0xFFC25A40), accentP1],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );
 
   static const LinearGradient p2Gradient = LinearGradient(
-    colors: [Color(0xFF94A3B8), Color(0xFF475569)],
+    colors: [Color(0xFF3C9482), accentP2],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );
 
   static const LinearGradient mandarinGradient = LinearGradient(
-    colors: [Color(0xFFF1F5F9), Color(0xFFCBD5E1)],
+    colors: [stoneMandarin, accentGold],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );
 
   static const LinearGradient boardGradient = LinearGradient(
-    colors: [Color(0xFF1E293B), Color(0xFF0F172A)],
+    colors: [woodMid, woodDeep],
     begin: Alignment.topCenter,
     end: Alignment.bottomCenter,
   );
 
+  // ── Shadows (soft carved/bevel, no glow) ─────────────────────────────────
   static List<BoxShadow> glassShadows = [
     BoxShadow(
-      color: Colors.black.withValues(alpha: 0.3),
+      color: Colors.black.withValues(alpha: 0.15),
       blurRadius: 16,
-      offset: const Offset(0, 8),
+      offset: const Offset(0, 6),
     ),
     BoxShadow(
-      color: Colors.white.withValues(alpha: 0.02),
+      color: Colors.white.withValues(alpha: 0.33),
       blurRadius: 1,
-      spreadRadius: 1,
       offset: const Offset(0, -1),
     ),
   ];
 
   static List<BoxShadow> activeShadowP1 = [
     BoxShadow(
-      color: const Color(0xFFE2E8F0).withValues(alpha: 0.25),
+      color: accentP1.withValues(alpha: 0.18),
       blurRadius: 12,
-      spreadRadius: 2,
+      spreadRadius: 1,
     ),
   ];
 
   static List<BoxShadow> activeShadowP2 = [
     BoxShadow(
-      color: const Color(0xFF94A3B8).withValues(alpha: 0.25),
+      color: accentP2.withValues(alpha: 0.18),
       blurRadius: 12,
-      spreadRadius: 2,
+      spreadRadius: 1,
     ),
   ];
 
-  static TextStyle get titleStyle => const TextStyle(
+  // ── Typography (Lora display + Be Vietnam Pro body; VN-complete) ──────────
+  static TextStyle get titleStyle => GoogleFonts.lora(
         fontSize: 28,
-        fontWeight: FontWeight.bold,
-        color: textPrimary,
-        letterSpacing: 1.2,
+        fontWeight: FontWeight.w700,
+        color: ink,
+        letterSpacing: 0.5,
         height: 1.2,
       );
 
-  static TextStyle get headingStyle => const TextStyle(
+  static TextStyle get headingStyle => GoogleFonts.lora(
         fontSize: 20,
-        fontWeight: FontWeight.w700,
-        color: textPrimary,
+        fontWeight: FontWeight.w600,
+        color: ink,
         height: 1.3,
       );
 
-  static TextStyle get bodyStyle => const TextStyle(
-        fontSize: 14,
+  static TextStyle get bodyStyle => GoogleFonts.beVietnamPro(
+        fontSize: 15,
         fontWeight: FontWeight.w400,
-        color: textPrimary,
+        color: ink,
         height: 1.5,
       );
 
-  static TextStyle get labelStyle => const TextStyle(
+  static TextStyle get labelStyle => GoogleFonts.beVietnamPro(
+        fontSize: 13,
+        fontWeight: FontWeight.w500,
+        color: inkMuted,
+        height: 1.4,
+      );
+
+  /// Minimum 12px footnote — ui-ux-pro-max readable-font-size floor.
+  static TextStyle get captionStyle => GoogleFonts.beVietnamPro(
         fontSize: 12,
         fontWeight: FontWeight.w500,
-        color: textMuted,
+        color: inkMuted,
         height: 1.4,
       );
 
   static ThemeData buildTheme() {
-    const scheme = ColorScheme.dark(
-      surface: background,
-      onSurface: textPrimary,
-      primary: accent,
-      onPrimary: textPrimary,
-      secondary: primaryP2,
-      onSecondary: textPrimary,
-      error: Color(0xFFEF4444),
-      onError: textPrimary,
+    const scheme = ColorScheme.light(
+      surface: paper,
+      onSurface: ink,
+      primary: accentP1,
+      onPrimary: paper,
+      secondary: accentP2,
+      onSecondary: paper,
+      tertiary: accentGold,
+      error: Color(0xFFA3301F),
+      onError: paper,
     );
+
+    final baseTextTheme = Typography.material2021().black;
 
     return ThemeData(
       useMaterial3: true,
-      brightness: Brightness.dark,
+      brightness: Brightness.light,
       colorScheme: scheme,
-      scaffoldBackgroundColor: background,
+      scaffoldBackgroundColor: paper,
       splashFactory: InkRipple.splashFactory,
-      textTheme: const TextTheme(
-        displaySmall: TextStyle(fontSize: 32, fontWeight: FontWeight.w800, color: textPrimary),
-        titleLarge: TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: textPrimary),
-        titleMedium: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: textPrimary),
-        bodyMedium: TextStyle(fontSize: 14, fontWeight: FontWeight.w400, color: textSecondary, height: 1.5),
-        labelMedium: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: textMuted),
+      textTheme: GoogleFonts.beVietnamProTextTheme(baseTextTheme).copyWith(
+        displaySmall: GoogleFonts.lora(fontSize: 30, fontWeight: FontWeight.w700, color: ink),
+        titleLarge: GoogleFonts.lora(fontSize: 22, fontWeight: FontWeight.w600, color: ink),
+        titleMedium: GoogleFonts.beVietnamPro(fontSize: 16, fontWeight: FontWeight.w600, color: ink),
+        bodyMedium: GoogleFonts.beVietnamPro(fontSize: 15, fontWeight: FontWeight.w400, color: ink, height: 1.5),
+        labelMedium: GoogleFonts.beVietnamPro(fontSize: 13, fontWeight: FontWeight.w500, color: inkMuted),
       ),
     );
   }
